@@ -1,8 +1,8 @@
 A Backend Project to Practice better Backend Architecture using
 technologies like Node, Express and Prisma with PostgreSql.
 
-**What I Learnt:**
+**What is Focused in this Practice Project:**
 
- - Proper Architecture (3 layered) of the node and typescript with Prisma.
- - Set Environment Variables professionally with separate Dev and Production env.
- -  Proper Handling of Errors.
+ - To make proper architecture (3 layered) of the node and typescript with Prisma.
+ - To set Environment Variables professionally with separate Dev and Production env.
+ - To handle Errors Professionaly using OOP.

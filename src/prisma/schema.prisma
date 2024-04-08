@@ -12,3 +12,21 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum TokenType {
+  access
+  refresh
+  forgetPassword
+}
+
+model User{
+  id Int @id @default(autoincrement())
+  first_name String
+  last_name String
+  email String
+  password String
+  photo String?
+  is_verified Boolean @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
