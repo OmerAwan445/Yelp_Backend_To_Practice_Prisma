@@ -1,3 +1,4 @@
+
 export const signupSchema = {
   first_name: {
     isString: true,

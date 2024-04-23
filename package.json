@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "export NODE_ENV=production && nodemon src/app.ts",
     "dev": "nodemon src/app.ts",
+    "dev:debug": "nodemon --inspect src/app.ts",
     "lint": "eslint .",
     "lint-fix": "eslint . --fix"
   },
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@types/config": "^3.3.4",
     "@types/cors": "^2.8.17",
+    "@types/jsonwebtoken": "^9.0.6",
     "@typescript-eslint/eslint-plugin": "^7.4.0",
     "@typescript-eslint/parser": "^7.4.0",
     "eslint": "^8.57.0",

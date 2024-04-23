@@ -13,9 +13,7 @@ export default {
   },
   DEV_ENV: 'DEV_ENV',
   JWT: {
-    refresh_token_secret: "JWT_REFRESH_TOKEN_SECRET",
     access_token_secret: "JWT_ACCESS_TOKEN_SECRET",
-    refresh_token_expiry: "JWT_REFRESH_TOKEN_EXPIRY",
     access_token_expiry: "JWT_ACCESS_TOKEN_EXPIRY",
   },
 };

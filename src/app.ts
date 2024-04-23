@@ -1,10 +1,10 @@
 import "module-alias/register";
-import express, { Request, Response, NextFunction } from "express";
+import dotenv from "dotenv";
+dotenv.config();
+import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import appRoutes from "@routes/index";
 import { serverConfig } from "@src/server";
-import dotenv from "dotenv";
-dotenv.config();
 import config from "config";
 import { getEnv } from "@utils/getEnv";
 import ErrorHandler from "./errors/ErrorHandler";
@@ -18,15 +18,15 @@ app.use(express.json());
 app.use("/api", appRoutes);
 
 app.use(
-  (
-    err: CustomError | AppError,
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    const handler = new ErrorHandler(res, err);
-    handler.handleError();
-  }
+    (
+        err: CustomError | AppError,
+        req: Request,
+        res: Response,
+        next: NextFunction // eslint-disable-line
+    ) => {
+      const handler = new ErrorHandler(res, err);
+      handler.handleError();
+    },
 );
 
 serverConfig(app, getEnv("server.port") as string);
