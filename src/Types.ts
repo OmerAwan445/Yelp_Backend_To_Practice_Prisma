@@ -3,7 +3,7 @@ export interface CustomError extends Error {
 }
 
 export interface JwtUser {
-    id: string;
+    id: number
     email: string;
     name: string;
 }

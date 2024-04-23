@@ -5,12 +5,11 @@ import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import appRoutes from "@routes/index";
 import { serverConfig } from "@src/server";
-import config from "config";
 import { getEnv } from "@utils/getEnv";
 import ErrorHandler from "./errors/ErrorHandler";
 import { AppError } from "./errors/AppError";
 import { CustomError } from "./Types";
-console.log(config.get("db"));
+// console.log(config.get("db"));
 const app = express();
 
 app.use(cors({ origin: "*" }));

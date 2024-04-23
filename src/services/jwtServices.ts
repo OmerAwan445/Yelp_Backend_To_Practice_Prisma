@@ -2,13 +2,13 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { getEnv } from '@utils/getEnv';
 import { JwtUser } from '@src/Types';
 
-async function generateAccessToken(user:JwtUser):Promise<{ accessToken: string }> {
+async function generateAccessToken(user:JwtUser):Promise<string> {
   return new Promise((resolve, reject) => {
     try {
       const { access_token_secret, access_token_expiry } = getEnv('JWT');
       const accessToken = jwt.sign({ user }, access_token_secret, { expiresIn: access_token_expiry });
 
-      resolve({ accessToken });
+      resolve(accessToken);
     } catch (error:any) {
       console.log('Error in generating token:', error.message);
       reject(new Error('Error in generating token: ' + error.message ));
