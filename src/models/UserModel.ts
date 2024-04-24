@@ -1,5 +1,5 @@
 import { prisma } from "@src/db";
-import { prismaExclude } from '../prismaExclude';
+import { prismaExclude } from '../utils/prismaExclude';
 
 async function checkUserEmailUniquenes(email: string) {
   const isEmailUnique = await prisma.user.findUnique({ where: {
@@ -15,4 +15,10 @@ async function createUser(first_name: string, last_name: string, email: string, 
   });
 }
 
-export { checkUserEmailUniquenes, createUser };
+async function findUserByEmail(email: string) {
+  return await prisma.user.findUnique({
+    where: { email },
+  });
+}
+
+export { checkUserEmailUniquenes, createUser, findUserByEmail };

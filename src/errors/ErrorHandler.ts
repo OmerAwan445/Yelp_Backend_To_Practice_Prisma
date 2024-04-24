@@ -75,10 +75,11 @@ export default ErrorHandler;
 function errorResponseObj(error: AppError | CustomError) {
   if (getEnv("DEV_ENV") === "development") {
     return {
+      ...error,
       error: true,
+      message: error.message,
       stack: error.stack,
       data: [],
-      ...error,
     };
   } else {
     return ApiResponse.error(error.message, error.statusCode);

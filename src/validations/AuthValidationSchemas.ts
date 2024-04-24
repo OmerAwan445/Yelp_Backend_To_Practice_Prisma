@@ -21,3 +21,16 @@ export const signupSchema = {
     },
   },
 };
+
+export const loginSchema = {
+  email: {
+    isEmail: true,
+    notEmpty: true,
+    errorMessage: "Provide a valid email address",
+  },
+  password: {
+    notEmpty: true,
+    errorMessage: "Password is required",
+  },
+};
+
