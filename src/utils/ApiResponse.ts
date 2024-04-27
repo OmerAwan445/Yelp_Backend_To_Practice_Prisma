@@ -15,8 +15,8 @@ class ApiResponse {
     return new ApiResponse(false, statusCode, message, data);
   }
 
-  static error(message: string = 'Internal Server Error', statusCode: number = 500): ApiResponse {
-    return new ApiResponse(true, statusCode, message, []);
+  static error(message: string = 'Internal Server Error', statusCode: number = 500, data? : any): ApiResponse {
+    return new ApiResponse(true, statusCode, message, data ?? []);
   }
 }
 

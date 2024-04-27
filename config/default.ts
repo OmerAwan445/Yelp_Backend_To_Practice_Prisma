@@ -26,4 +26,8 @@ export default {
     access_token_secret: "",
     access_token_expiry: "",
   },
+  tokenExpiry: {
+    EMAIL_VERIFICATION: "",
+    PASSWORD_RESET: "",
+  },
 };

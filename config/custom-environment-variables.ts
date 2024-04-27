@@ -16,4 +16,8 @@ export default {
     access_token_secret: "JWT_ACCESS_TOKEN_SECRET",
     access_token_expiry: "JWT_ACCESS_TOKEN_EXPIRY",
   },
+  tokenExpiry: {
+    EMAIL_VERIFICATION: "EMAIL_VERIFICATION_TOKEN_EXPIRY",
+    PASSWORD_RESET: "PASSWORD_RESET_TOKEN_EXPIRY",
+  },
 };

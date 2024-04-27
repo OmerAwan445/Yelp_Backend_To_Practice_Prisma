@@ -9,8 +9,9 @@ import { getEnv } from "@utils/getEnv";
 import ErrorHandler from "./errors/ErrorHandler";
 import { AppError } from "./errors/AppError";
 import { CustomError } from "./Types";
-// console.log(config.get("db"));
+console.log(getEnv("tokenExpiry"));
 const app = express();
+
 
 app.use(cors({ origin: "*" }));
 app.use(express.json());
