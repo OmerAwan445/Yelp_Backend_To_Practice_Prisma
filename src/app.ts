@@ -9,7 +9,7 @@ import { getEnv } from "@utils/getEnv";
 import ErrorHandler from "./errors/ErrorHandler";
 import { AppError } from "./errors/AppError";
 import { CustomError } from "./Types";
-console.log(getEnv("tokenExpiry"));
+// console.log(getEnv("tokenExpiry"));
 const app = express();
 
 
@@ -23,7 +23,7 @@ app.use(
         req: Request,
         res: Response,
         next: NextFunction // eslint-disable-line
-    ) => {
+    ):void => {
       const handler = new ErrorHandler(res, err);
       handler.handleError();
     },

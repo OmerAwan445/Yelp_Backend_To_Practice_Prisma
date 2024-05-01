@@ -1,6 +1,6 @@
 import { LoginRequestBody, SignupRequestBody } from '@src/Types';
 import { AppError } from '@src/errors/AppError';
-import { checkUserEmailUniquenes, createUser, findUserByEmail } from '@src/models/UserModel';
+import { checkUserEmailUniquenes, createUser, findUserByEmail, findUserById } from '@src/models/UserModel';
 import { comparePassword, hashPassword } from '@src/services/bcryptPassword';
 import { generateAccessToken } from '@src/services/jwtServices';
 import ApiResponse from '@src/utils/ApiResponse';
@@ -47,5 +47,14 @@ const LoginUser = catchAsyncError(async (req: Request<object, object, LoginReque
       ApiResponse.success({ accessToken, ...userWithoutPassword }, "User logged in successfully", 200));
 });
 
-export { LoginUser, SignupUser };
+const SendVerificationEmail = catchAsyncError(async (req: Request<object, object, { userId: number }>, res) => {
+  const { userId } = req.body;
+  const user = await findUserById(userId);
+  if (!user) return res.status(404).send(ApiResponse.error("No User Found", 404));
+  const userEmail = user.email;
+  const { msg } = await sendVerificationEmailAndSaveToken(userEmail, "EMAIL_VERIFICATION", userId);
+  return res.send(ApiResponse.success({}, msg, 200));
+});
+
+export { LoginUser, SignupUser, SendVerificationEmail };
 

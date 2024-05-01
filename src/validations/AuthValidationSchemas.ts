@@ -1,13 +1,26 @@
+import { Schema } from "express-validator";
 
-export const signupSchema = {
+export const signupSchema:Schema = {
   first_name: {
-    isString: true,
     notEmpty: true,
+    isString: {
+      errorMessage: "First name must be a string",
+    },
+    matches: {
+      options: /^[a-zA-Z]+$/,
+      errorMessage: "First name must contain only alphabetic characters",
+    },
     errorMessage: "First name is required",
   },
   last_name: {
-    isString: true,
     notEmpty: true,
+    isString: {
+      errorMessage: "Last name must be a string",
+    },
+    matches: {
+      options: /^[a-zA-Z]+$/,
+      errorMessage: "First name must contain only alphabetic characters",
+    },
     errorMessage: "Last name is required",
   },
   email: {
@@ -22,10 +35,10 @@ export const signupSchema = {
   },
 };
 
-export const loginSchema = {
+export const loginSchema: Schema = {
   email: {
-    isEmail: true,
     notEmpty: true,
+    isEmail: true,
     errorMessage: "Provide a valid email address",
   },
   password: {
@@ -34,3 +47,20 @@ export const loginSchema = {
   },
 };
 
+
+export const verifyEmailSchema: Schema = {
+  userId: {
+    exists: {
+      options: { values: "falsy" },
+      errorMessage: "User id is required",
+    },
+    custom: {
+      options: (value:any) => {
+        if (typeof value !== "number" || value <= 0 || !Number.isInteger(value)) {
+          throw new Error("User id must be an integer greater than 0");
+        }
+        return true;
+      },
+    },
+  },
+};

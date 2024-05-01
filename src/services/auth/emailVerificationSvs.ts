@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-async function sendVerificationEmail(email: string, token: string) {
+function sendVerificationEmail(email: string, token: string) {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -22,12 +22,16 @@ async function sendVerificationEmail(email: string, token: string) {
       </div>
     `,
   };
-  try {
+  // await for the email to be sent (which is slow )
+  /* try {
     await transporter.sendMail(mailOptions);
     return "Verification email sent successfully";
   } catch (error) {
     return "Error in sending email";
-  }
+  } */
+  // non async is used to avoid the slow email sending process
+  transporter.sendMail(mailOptions);
+  return "Verification email sent successfully";
 }
 
 export { sendVerificationEmail };
