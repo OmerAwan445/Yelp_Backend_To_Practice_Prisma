@@ -1,16 +1,5 @@
 import { prisma } from "@src/db";
 import { prismaExclude } from "../utils/prismaExclude";
-import { tokenType } from "@prisma/client";
-import { getEnv } from "@src/utils/getEnv";
-
-async function checkUserEmailUniquenes(email: string) {
-  const isEmailUnique = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
-  return isEmailUnique == null;
-}
 
 async function createUser(
     first_name: string,
@@ -24,55 +13,30 @@ async function createUser(
   });
 }
 
-async function saveTokenToDbIfExistUpdate(
-    token: string,
-    userId: number,
-    tokenType: tokenType,
-) {
-  let expiryTime: Date;
-  switch (tokenType) {
-    case "EMAIL_VERIFICATION":
-      expiryTime = new Date(
-          Date.now() + Number(getEnv("tokenExpiry.EMAIL_VERIFICATION")) * 1000,
-      );
-      break;
-    case "PASSWORD_RESET":
-      expiryTime = new Date(
-          Date.now() + Number(getEnv("tokenExpiry.PASSWORD_RESET")) * 1000,
-      );
-      break;
-  }
-  return await prisma.userToken.upsert({
-    create: {
-      token,
-      userId,
-      tokenType,
-      expiry: expiryTime,
-    },
-    update: {
-      token,
-      userId,
-      tokenType,
-      expiry: expiryTime,
-    },
-    where: {
-      userId_tokenType: {
-        userId,
-        tokenType,
+async function makeUserVerifiedAndDeleteToken(userId: number) {
+  return await prisma.$transaction(async (tx) => {
+    await tx.userToken.delete({
+      where: {
+        userId_tokenType: {
+          userId, tokenType: "EMAIL_VERIFICATION",
+        },
       },
-    },
+    });
+    return await tx.user.update({
+      where: { id: userId },
+      data: { is_verified: true },
+      select: prismaExclude("User", ["password"]),
+    });
   });
 }
 
-async function findUserToken(userId: number, tokenType: tokenType) {
-  return await prisma.userToken.findUnique({
+async function checkUserEmailUniquenes(email: string) {
+  const isEmailUnique = await prisma.user.findUnique({
     where: {
-      userId_tokenType: {
-        userId,
-        tokenType,
-      },
+      email,
     },
   });
+  return isEmailUnique == null;
 }
 
 async function findUserByEmail(email: string) {
@@ -84,7 +48,6 @@ async function findUserByEmail(email: string) {
 async function findUserById(userId: number) {
   return await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true },
   });
 }
 
@@ -93,6 +56,6 @@ export {
   createUser,
   findUserByEmail,
   findUserById,
-  findUserToken,
-  saveTokenToDbIfExistUpdate,
+  makeUserVerifiedAndDeleteToken,
 };
+

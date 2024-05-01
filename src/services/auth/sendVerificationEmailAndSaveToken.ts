@@ -1,13 +1,13 @@
 import { tokenType } from "@prisma/client";
-import { saveTokenToDbIfExistUpdate } from "@src/models/UserModel";
+import { saveTokenToDbIfExistUpdate } from "@src/models/UserTokenModel";
 import { getEnv } from "@src/utils/getEnv";
 import { formatResendVerificationTime,
   isTokenResendEligible } from "@src/utils/verificationTokenUtils";
 import nodemailer from "nodemailer";
-import { generateCryptoTokenAndEncryptData } from "./verificationTokenSvs";
+import { generateCryptoTokenAndEncryptData } from "./cryptoVerificationTokenSvs";
 import { AppError } from "@src/errors/AppError";
 
-function sendVerificationEmail(email: string, token: string) {
+function sendEmail(email: string, token: string) {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -52,10 +52,10 @@ const sendVerificationEmailAndSaveToken = async (email: string, tokenType: token
   }
   const token = generateCryptoTokenAndEncryptData( { userId } );
   if (!token) throw new AppError("Token generation failed", 500);
-  const msg = sendVerificationEmail(email, token);
+  const msg = sendEmail(email, token);
   await saveTokenToDbIfExistUpdate(token, userId, tokenType);
-  return { msg, error: false, statusCode: 200, token };
+  return { msg, error: false, statusCode: 200 };
 };
 
 
-export { sendVerificationEmail, sendVerificationEmailAndSaveToken };
+export { sendVerificationEmailAndSaveToken };

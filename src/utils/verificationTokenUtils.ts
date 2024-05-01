@@ -1,5 +1,5 @@
 import { tokenType } from '@prisma/client';
-import { findUserToken } from '@src/models/UserModel';
+import { findUserToken } from '@src/models/UserTokenModel';
 import { getEnv } from './getEnv';
 
 // function to check if Previous Token Updated Time is Less Than Token Resend Time
