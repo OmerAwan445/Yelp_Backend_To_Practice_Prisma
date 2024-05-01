@@ -5,8 +5,9 @@ import { comparePassword, hashPassword } from '@src/services/bcryptPassword';
 import { generateAccessToken } from '@src/services/jwtServices';
 import ApiResponse from '@src/utils/ApiResponse';
 import { catchAsyncError } from '@src/utils/catchAsyncError';
-import { sendVerificationEmailAndSaveToken } from '@src/utils/emailVerification';
+import { sendVerificationEmailAndSaveToken } from '@src/services/auth/emailVerificationSvs';
 import { Request, Response } from 'express';
+import { extractDataFromCryptoToken } from '@src/services/auth/verificationTokenSvs';
 
 const SignupUser = catchAsyncError(async (req: Request<object, object, SignupRequestBody>, res: Response) => {
   const { first_name, last_name, email, password } = req.body;
@@ -35,8 +36,10 @@ const LoginUser = catchAsyncError(async (req: Request<object, object, LoginReque
 
   if (!user.is_verified) {
     // Send verification email and save token
-    const { msg } = await sendVerificationEmailAndSaveToken(user.email, "EMAIL_VERIFICATION", user.id);
-    return res.status(401).send(ApiResponse.error('User Email is not verified & ' + msg, 401, { userId: user.id }));
+    const { msg, token } = await sendVerificationEmailAndSaveToken(user.email, "EMAIL_VERIFICATION", user.id);
+    console.log(token);
+    return res.status(401).send(ApiResponse.error('User Email is not verified & ' + msg, 401, { userId: user.id,
+      token }));
   }
 
   const { password:_, ...userWithoutPassword } = user; // eslint-disable-line
@@ -52,9 +55,17 @@ const SendVerificationEmail = catchAsyncError(async (req: Request<object, object
   const user = await findUserById(userId);
   if (!user) return res.status(404).send(ApiResponse.error("No User Found", 404));
   const userEmail = user.email;
-  const { msg } = await sendVerificationEmailAndSaveToken(userEmail, "EMAIL_VERIFICATION", userId);
-  return res.send(ApiResponse.success({}, msg, 200));
+  const { msg, error, statusCode } = await sendVerificationEmailAndSaveToken(userEmail, "EMAIL_VERIFICATION", userId);
+  if (error) return res.status(statusCode).send(ApiResponse.error(msg, statusCode)); // token already sent
+  return res.send(ApiResponse.success({}, msg, statusCode));
 });
 
-export { LoginUser, SignupUser, SendVerificationEmail };
+const VerifyEmailVerificationToken = catchAsyncError(async (req: Request<any, any, any, { token?: string }>,
+    res: Response) => {
+  const token = req.query.token as string;
+  const payload = extractDataFromCryptoToken(token);
+  res.send(ApiResponse.success({ payload }, "Token verified successfully", 200));
+});
+
+export { LoginUser, SendVerificationEmail, SignupUser, VerifyEmailVerificationToken };
 

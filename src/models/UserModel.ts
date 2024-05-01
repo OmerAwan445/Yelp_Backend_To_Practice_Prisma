@@ -64,6 +64,17 @@ async function saveTokenToDbIfExistUpdate(
   });
 }
 
+async function findUserToken(userId: number, tokenType: tokenType) {
+  return await prisma.userToken.findUnique({
+    where: {
+      userId_tokenType: {
+        userId,
+        tokenType,
+      },
+    },
+  });
+}
+
 async function findUserByEmail(email: string) {
   return await prisma.user.findUnique({
     where: { email },
@@ -82,5 +93,6 @@ export {
   createUser,
   findUserByEmail,
   findUserById,
+  findUserToken,
   saveTokenToDbIfExistUpdate,
 };

@@ -64,3 +64,13 @@ export const verifyEmailSchema: Schema = {
     },
   },
 };
+
+export const verifyEmailTokenSchema: Schema = {
+  token: {
+    notEmpty: true,
+    isString: {
+      errorMessage: "Token must be a string",
+    },
+    errorMessage: "Token is required",
+  },
+};

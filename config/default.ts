@@ -1,15 +1,12 @@
-// eslint-disable-next-line
-// require('dotenv').config();
-/* EMPTY FIELD WILL COME FROM custom-environment-variables.cjs file \
+/* EMPTY FIELD WILL COME FROM custom-environment-variables.ts file \
 AND THEY ARE COMMON IN DEV AND PRODUCTION
 
 ==== ORDER FOR COMIPLATION OF CONFIG FILES ===
-## default.cjs (always)
-## production.cjs (only if NODE_ENV=production)
-## custom-environment-variables.cjs (always)
+## default.ts (always)
+## production.ts (only if NODE_ENV=production)
+## custom-environment-variables.ts (always)
 */
 
-// eslint-disable-next-line
 export default {
   db: {
     port: "5432",
@@ -30,4 +27,7 @@ export default {
     EMAIL_VERIFICATION: "",
     PASSWORD_RESET: "",
   },
+  VerificationTokenSecret: "",
+  VerificationTokenIVSecret: "",
+  RESEND_VERIFICATION_EMAIL_TIME: 600, // 10 minutes in seconds (60*10)
 };

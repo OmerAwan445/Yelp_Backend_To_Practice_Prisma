@@ -1,4 +1,11 @@
+import { tokenType } from "@prisma/client";
+import { saveTokenToDbIfExistUpdate } from "@src/models/UserModel";
+import { getEnv } from "@src/utils/getEnv";
+import { formatResendVerificationTime,
+  isTokenResendEligible } from "@src/utils/verificationTokenUtils";
 import nodemailer from "nodemailer";
+import { generateCryptoTokenAndEncryptData } from "./verificationTokenSvs";
+import { AppError } from "@src/errors/AppError";
 
 function sendVerificationEmail(email: string, token: string) {
   const transporter = nodemailer.createTransport({
@@ -34,4 +41,21 @@ function sendVerificationEmail(email: string, token: string) {
   return "Verification email sent successfully";
 }
 
-export { sendVerificationEmail };
+const sendVerificationEmailAndSaveToken = async (email: string, tokenType: tokenType, userId: number) => {
+  const _isTokenResendEligible = await isTokenResendEligible(userId, tokenType);
+  const RESEND_VERIFICATION_EMAIL_TIME = formatResendVerificationTime(getEnv('RESEND_VERIFICATION_EMAIL_TIME'));
+  if (_isTokenResendEligible) {
+    return {
+      msg: `Verification Email already sent. Try again after ${RESEND_VERIFICATION_EMAIL_TIME}`,
+      error: true, statusCode: 409,
+    };
+  }
+  const token = generateCryptoTokenAndEncryptData( { userId } );
+  if (!token) throw new AppError("Token generation failed", 500);
+  const msg = sendVerificationEmail(email, token);
+  await saveTokenToDbIfExistUpdate(token, userId, tokenType);
+  return { msg, error: false, statusCode: 200, token };
+};
+
+
+export { sendVerificationEmail, sendVerificationEmailAndSaveToken };

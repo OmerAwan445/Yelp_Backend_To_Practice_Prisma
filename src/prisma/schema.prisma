@@ -26,6 +26,8 @@ model UserToken {
   token     String
   expiry    DateTime
   userId    Int
+  updated_at DateTime @updatedAt
+  created_at DateTime @default(now())
   user      User      @relation(fields: [userId], references: [id])
 
   @@unique([userId, tokenType])
