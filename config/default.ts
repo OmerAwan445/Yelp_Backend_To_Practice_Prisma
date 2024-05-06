@@ -6,7 +6,6 @@ AND THEY ARE COMMON IN DEV AND PRODUCTION
 ## production.ts (only if NODE_ENV=production)
 ## custom-environment-variables.ts (always)
 */
-
 export default {
   db: {
     port: "5432",
@@ -18,6 +17,7 @@ export default {
   server: {
     port: 3000,
   },
+  FRONTEND_URL: "http://localhost:3000",
   DEV_ENV: "",
   JWT: {
     access_token_secret: "",
@@ -30,4 +30,5 @@ export default {
   VerificationTokenSecret: "",
   VerificationTokenIVSecret: "",
   RESEND_VERIFICATION_EMAIL_TIME: 600, // 10 minutes in seconds (60*10)
+  RESEND_FORGET_PASS_EMAIL_TIME: 600, // 10 minutes in seconds (60*10)
 };

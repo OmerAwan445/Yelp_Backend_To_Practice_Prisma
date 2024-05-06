@@ -1,10 +1,14 @@
 import { LoginRequestBody, SignupRequestBody } from '@src/Types';
 import { AppError } from '@src/errors/AppError';
-import { checkUserEmailUniquenes, createUser, findUserByEmail, findUserById,
-  makeUserVerifiedAndDeleteToken } from '@src/models/UserModel';
+import {
+  checkUserEmailUniquenes, createUser, findUserByEmail, findUserById,
+  makeUserVerifiedAndDeleteToken,
+} from '@src/models/UserModel';
 import { findUserToken } from '@src/models/UserTokenModel';
-import { sendVerificationEmailAndSaveToken } from '@src/services/auth/sendVerificationEmailAndSaveToken';
 import { extractDataFromCryptoToken } from '@src/services/auth/cryptoVerificationTokenSvs';
+import { sendForgetPassEmailAndSaveTokenIfResendTimeLimitNotExceeded } from '@src/services/auth/forgetPasswordSvs';
+import { sendVerificationEmailAndSaveTokenIfResendTimeLimitNotExceeded }
+  from '@src/services/auth/verificationEmailSvs';
 import { comparePassword, hashPassword } from '@src/services/bcryptPassword';
 import { generateAccessToken } from '@src/services/jwtServices';
 import ApiResponse from '@src/utils/ApiResponse';
@@ -21,7 +25,7 @@ const SignupUser = catchAsyncError(async (req: Request<object, object, SignupReq
   const user = await createUser(first_name, last_name, email, hashedPassword);
 
   // Send verification email and save token
-  const { msg } = await sendVerificationEmailAndSaveToken(user.email, "EMAIL_VERIFICATION", user.id);
+  const { msg } = await sendVerificationEmailAndSaveTokenIfResendTimeLimitNotExceeded(user.email, user.id);
 
   return res.send(ApiResponse.success({ ...user }, 'User created successfully & ' + msg, 201));
 });
@@ -37,7 +41,7 @@ const LoginUser = catchAsyncError(async (req: Request<object, object, LoginReque
   }
 
   if (!user.is_verified) {
-    const { msg } = await sendVerificationEmailAndSaveToken(user.email, "EMAIL_VERIFICATION", user.id);
+    const { msg } = await sendVerificationEmailAndSaveTokenIfResendTimeLimitNotExceeded(user.email, user.id);
     return res.status(401).send(ApiResponse.error('User Email is not verified & ' + msg, 401, { userId: user.id }));
   }
 
@@ -56,7 +60,8 @@ const SendVerificationEmail = catchAsyncError(async (req: Request<object, object
     return res.status(404).send(ApiResponse.error("No User Found Or User is Already Verified", 404));
   }
   const userEmail = user.email;
-  const { msg, error, statusCode } = await sendVerificationEmailAndSaveToken(userEmail, "EMAIL_VERIFICATION", userId);
+  const { msg, error, statusCode } = await sendVerificationEmailAndSaveTokenIfResendTimeLimitNotExceeded(
+      userEmail, userId);
   if (error) return res.status(statusCode).send(ApiResponse.error(msg, statusCode)); // token already sent
   return res.send(ApiResponse.success({}, msg, statusCode));
 });
@@ -81,5 +86,22 @@ const VerifyEmailVerificationToken = catchAsyncError(async (req: Request<any, an
   res.send(ApiResponse.success({ ...user, accessToken }, "User verified successfully", 200));
 });
 
-export { LoginUser, SendVerificationEmail, SignupUser, VerifyEmailVerificationToken };
+const ForgetPassword = catchAsyncError(async (req: Request<object, object, { email: string }>, res) => {
+  const { email } = req.body;
+
+  // find user by email
+  const user = await findUserByEmail(email);
+  if (!user) return res.status(404).send(ApiResponse.error("User not found", 404));
+
+  // generate a token
+
+  // send email with token
+  const { msg, error, statusCode } = await sendForgetPassEmailAndSaveTokenIfResendTimeLimitNotExceeded(
+      user.email, user.id);
+  // save token to db with expiry date
+  if (error) return res.status(statusCode).send(ApiResponse.error(msg, statusCode)); // token already sent
+  return res.send(ApiResponse.success({}, msg, statusCode));
+});
+
+export { ForgetPassword, LoginUser, SendVerificationEmail, SignupUser, VerifyEmailVerificationToken };
 

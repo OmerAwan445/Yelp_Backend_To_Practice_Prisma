@@ -74,3 +74,11 @@ export const verifyEmailTokenSchema: Schema = {
     errorMessage: "Token is required",
   },
 };
+export const forgetPasswordSchema: Schema = {
+  email: {
+    notEmpty: true,
+    isEmail: {
+      errorMessage: "Invalid email",
+    },
+  },
+};

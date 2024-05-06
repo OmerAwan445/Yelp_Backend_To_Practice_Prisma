@@ -9,7 +9,7 @@ import { getEnv } from "@utils/getEnv";
 import ErrorHandler from "./errors/ErrorHandler";
 import { AppError } from "./errors/AppError";
 import { CustomError } from "./Types";
-// console.log(getEnv("tokenExpiry"));
+console.log(getEnv("FRONTEND_URL"));
 const app = express();
 
 

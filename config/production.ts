@@ -3,7 +3,6 @@ custom-environment-variables.js FILE
 AND THEY ARE COMMON ON DEV AND PRODUCTION
 FILLED FIELDS MEANS THAT THEY ARE ONLY USED IN PRODUCTION (ONLY WHEN NODE_ENV=production)
 */
-
 export default {
   db: {
     port: process.env.DB_PORT,
@@ -15,6 +14,7 @@ export default {
   server: {
     port: process.env.SERVER_PORT,
   },
+  FRONTEND_URL: process.env.FRONTEND_URL,
   DEV_ENV: "",
   JWT: {
     access_token_secret: "",
