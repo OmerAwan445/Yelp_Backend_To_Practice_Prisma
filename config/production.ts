@@ -2,6 +2,7 @@
 custom-environment-variables.js FILE
 AND THEY ARE COMMON ON DEV AND PRODUCTION
 FILLED FIELDS MEANS THAT THEY ARE ONLY USED IN PRODUCTION (ONLY WHEN NODE_ENV=production)
+and they will be overriden over default.ts file
 */
 export default {
   db: {
