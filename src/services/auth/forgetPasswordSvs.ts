@@ -1,9 +1,10 @@
 import { getEnv } from "@src/utils/getEnv";
-import { formatTimeInWordsWithUnit, isTokenResendEligible } from "@src/utils/verificationTokenUtils";
-import { generateCryptoTokenAndEncryptData } from "./cryptoVerificationTokenSvs";
+import { formatTimeInWordsWithUnit } from "@src/utils/formatTimeInWordsWithUnit";
+import { generateCryptoTokenAndEncryptData, isTokenResendEligible } from "./cryptoVerificationTokenSvs";
 import { AppError } from "@src/errors/AppError";
-import { sendForgotPasswordEmail } from "./mailSvs";
+import EmailService from "./mailSvs";
 import { saveTokenToDbIfExistUpdate } from "@src/models/UserTokenModel";
+import { EncryptedDataInToken } from "@src/Types";
 
 /**
  * Sends a forget password email, generates a crypto token with encrypted userId in it and
@@ -28,11 +29,11 @@ const sendForgetPassEmailAndSaveTokenIfResendTimeLimitNotExceeded = async (
       statusCode: 409,
     };
   }
-  const token = generateCryptoTokenAndEncryptData({ userId });
+  const token = generateCryptoTokenAndEncryptData<EncryptedDataInToken>({ userId });
   if (!token) throw new AppError("Token generation failed", 500);
-  const msg = await sendForgotPasswordEmail(email, token);
+  const msg = await EmailService.sendForgotPasswordEmail(email, token);
   await saveTokenToDbIfExistUpdate(token, userId, tokenType);
-  return { msg, error: false, statusCode: 200 };
+  return { token: encodeURIComponent(token), msg, error: false, statusCode: 200 };
 };
 
 

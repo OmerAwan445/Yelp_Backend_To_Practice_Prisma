@@ -1,25 +1,21 @@
-import { LoginRequestBody, SignupRequestBody } from '@src/Types';
+import { LoginRequestBody, ResetPasswordRequestBody, SignupRequestBody } from '@src/Types';
 import { AppError } from '@src/errors/AppError';
-import {
-  checkUserEmailUniquenes, createUser, findUserByEmail, findUserById,
-  makeUserVerifiedAndDeleteToken,
-} from '@src/models/UserModel';
-import { findUserToken } from '@src/models/UserTokenModel';
-import { extractDataFromCryptoToken } from '@src/services/auth/cryptoVerificationTokenSvs';
+import { checkUserEmailUniquenes, createUser, findUserByEmail, findUserById, makeUserVerifiedAndDeleteToken, updatePasswordAndDeleteToken } from '@src/models/UserModel'; // eslint-disable-line
+import { checkTokenValidityAndExtractData } from '@src/services/auth/cryptoVerificationTokenSvs'; // eslint-disable-line
 import { sendForgetPassEmailAndSaveTokenIfResendTimeLimitNotExceeded } from '@src/services/auth/forgetPasswordSvs';
-import { sendVerificationEmailAndSaveTokenIfResendTimeLimitNotExceeded }
-  from '@src/services/auth/verificationEmailSvs';
-import { comparePassword, hashPassword } from '@src/services/bcryptPassword';
-import { generateAccessToken } from '@src/services/jwtServices';
+import EmailService from '@src/services/auth/mailSvs';
+import { sendVerificationEmailAndSaveTokenIfResendTimeLimitNotExceeded } from '@src/services/auth/verificationEmailSvs';
+import { comparePassword, hashPassword } from '@src/services/auth/bcryptPasswordSvs';
+import { generateAccessToken } from '@src/services/auth/jwtServices';
 import ApiResponse from '@src/utils/ApiResponse';
 import { catchAsyncError } from '@src/utils/catchAsyncError';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 
-const SignupUser = catchAsyncError(async (req: Request<object, object, SignupRequestBody>, res: Response) => {
+const SignupUser = catchAsyncError(async (req: Request<object, object, SignupRequestBody>, res, next) => {
   const { first_name, last_name, email, password } = req.body;
 
   const isEmailUnique = await checkUserEmailUniquenes(email);
-  if (isEmailUnique == false) return res.status(409).send(ApiResponse.error('Email already exists', 409));
+  if (isEmailUnique == false) return next(new AppError('Email already exists', 409));
 
   const hashedPassword = await hashPassword(password);
   const user = await createUser(first_name, last_name, email, hashedPassword);
@@ -30,6 +26,7 @@ const SignupUser = catchAsyncError(async (req: Request<object, object, SignupReq
   return res.send(ApiResponse.success({ ...user }, 'User created successfully & ' + msg, 201));
 });
 
+
 const LoginUser = catchAsyncError(async (req: Request<object, object, LoginRequestBody>, res, next ) => {
   const { email, password } = req.body;
 
@@ -37,7 +34,7 @@ const LoginUser = catchAsyncError(async (req: Request<object, object, LoginReque
 
   // Check if user exists && password is correct
   if (!user || !(await comparePassword(password, user.password))) {
-    return next(new AppError("Invalid email or password", 401));
+    return next(new AppError("Invalid email or password", 404));
   }
 
   if (!user.is_verified) {
@@ -53,32 +50,29 @@ const LoginUser = catchAsyncError(async (req: Request<object, object, LoginReque
       ApiResponse.success({ accessToken, ...userWithoutPassword }, "User logged in successfully", 200));
 });
 
-const SendVerificationEmail = catchAsyncError(async (req: Request<object, object, { userId: number }>, res) => {
+
+const SendVerificationEmail = catchAsyncError(async (req: Request<object, object, { userId: number }>, res, next) => {
   const { userId } = req.body;
   const user = await findUserById(userId);
   if (!user || user.is_verified) {
-    return res.status(404).send(ApiResponse.error("No User Found Or User is Already Verified", 404));
+    return next(new AppError("No User Found Or User is Already Verified", 404));
   }
   const userEmail = user.email;
-  const { msg, error, statusCode } = await sendVerificationEmailAndSaveTokenIfResendTimeLimitNotExceeded(
+  const { token, msg, error, statusCode } = await sendVerificationEmailAndSaveTokenIfResendTimeLimitNotExceeded(
       userEmail, userId);
-  if (error) return res.status(statusCode).send(ApiResponse.error(msg, statusCode)); // token already sent
-  return res.send(ApiResponse.success({}, msg, statusCode));
+  if (error) return next(new AppError(msg, statusCode));
+  return res.send(ApiResponse.success(process.env.NODE_ENV === "production" ? { } : { token }, msg, statusCode));
 });
 
-const VerifyEmailVerificationToken = catchAsyncError(async (req: Request<any, any, any, { token?: string }>,
-    res: Response) => {
-  const token = req.query.token as string;
-  // 1. check token is correct and extract user id from token.
-  const data = extractDataFromCryptoToken(token);
-  if (!data || !data.userId ) return res.status(400).send(ApiResponse.error("Invalid token", 400));
 
-  const userToken = await findUserToken(data.userId, "EMAIL_VERIFICATION");
-  // 2. check if token is valid from db and is not expired
-  if (!userToken || userToken.expiry.getTime() < new Date().getTime() ) {
-    return res.status(401).send(ApiResponse.error("Token is invalid or expired", 401));
-  }
-  // 3. make user is_verified true and Delete the token from the Db
+const VerifyEmailVerificationToken = catchAsyncError(async (req: Request<any, any, any, { token?: string }>,
+    res, next) => {
+  const token = req.query.token as string;
+  // 1. check if token is valid from db and is not expired
+  const { data, isValidToken, errorMsg } = await checkTokenValidityAndExtractData(token, "EMAIL_VERIFICATION"); //eslint-disable-line
+  if (!isValidToken || !data) return next(new AppError(errorMsg as string, 401));
+
+  // 2. make user verified and Delete the token from the Db
   const user = await makeUserVerifiedAndDeleteToken(data.userId);
   const accessToken = await generateAccessToken({ id: user.id, email:
     user.email, name: user.first_name + user.last_name });
@@ -86,22 +80,57 @@ const VerifyEmailVerificationToken = catchAsyncError(async (req: Request<any, an
   res.send(ApiResponse.success({ ...user, accessToken }, "User verified successfully", 200));
 });
 
-const ForgetPassword = catchAsyncError(async (req: Request<object, object, { email: string }>, res) => {
+
+const ForgetPassword = catchAsyncError(async (req: Request<object, object, { email: string }>, res, next) => {
   const { email } = req.body;
 
-  // find user by email
+  // 1. find user by email
   const user = await findUserByEmail(email);
-  if (!user) return res.status(404).send(ApiResponse.error("User not found", 404));
+  if (!user) return next(new AppError("User not found", 404));
 
-  // generate a token
-
-  // send email with token
-  const { msg, error, statusCode } = await sendForgetPassEmailAndSaveTokenIfResendTimeLimitNotExceeded(
+  // 2. generate a token and send email with token
+  const { token, msg, error, statusCode } = await sendForgetPassEmailAndSaveTokenIfResendTimeLimitNotExceeded(
       user.email, user.id);
-  // save token to db with expiry date
-  if (error) return res.status(statusCode).send(ApiResponse.error(msg, statusCode)); // token already sent
-  return res.send(ApiResponse.success({}, msg, statusCode));
+  // 3. save token to db with expiry date
+  if (error) return next(new AppError(msg, statusCode)); // token already sent
+  return res.send(ApiResponse.success(process.env.NODE_ENV === "production" ? { } : { token }, msg, statusCode));
 });
 
-export { ForgetPassword, LoginUser, SendVerificationEmail, SignupUser, VerifyEmailVerificationToken };
+
+const VerifyForgetPasswordToken = catchAsyncError(async (req: Request<any, any, any, { token?: string }>,
+    res, next) => {
+  const { token } = req.query;
+
+  // check if token is valid from db and is not expired
+  const { data, isValidToken, errorMsg } = await checkTokenValidityAndExtractData(token as string, "PASSWORD_RESET");
+  if (!isValidToken || !data) return next(new AppError(errorMsg as string, 401));
+
+  return res.send(ApiResponse.success(process.env.NODE_ENV === "production" ?
+  { } : { ...data }, "Token Verified Successfully"));
+});
+
+
+const ResetPassword = catchAsyncError(async (req: Request<any, any, ResetPasswordRequestBody>,
+    res, next) => {
+  const { token, password } = req.body;
+
+  // 1. check if token is valid from db and is not expired
+  const { data, isValidToken, errorMsg } = await checkTokenValidityAndExtractData(token, "PASSWORD_RESET");
+  if (!isValidToken || !data) return next(new AppError(errorMsg as string, 401));
+
+  // 2. update the password and delete the token from the db
+  const { email } = await updatePasswordAndDeleteToken(data.userId, await hashPassword(password));
+  // 3. send email to user that password has been changed
+  await EmailService.sendResetPasswordEmail(email);
+  return res.send(ApiResponse.success({}, "Password changed successfully"));
+});
+
+
+export {
+  ForgetPassword,
+  LoginUser, ResetPassword, SendVerificationEmail,
+  SignupUser,
+  VerifyEmailVerificationToken,
+  VerifyForgetPasswordToken,
+};
 

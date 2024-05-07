@@ -1,8 +1,8 @@
-import { ForgetPassword, LoginUser, SendVerificationEmail, SignupUser,
-  VerifyEmailVerificationToken } from "@src/controllers/auth_controller";
+import { ForgetPassword, LoginUser, ResetPassword, SendVerificationEmail, SignupUser,
+  VerifyEmailVerificationToken, VerifyForgetPasswordToken } from "@src/controllers/auth_controller";
 import { validateRequestSchema } from "@src/middlewares/validate-request-schema";
 import { validatePasswordMatch } from "@src/middlewares/validatePasswordMatch";
-import { forgetPasswordSchema, loginSchema, signupSchema,
+import { forgetPasswordSchema, loginSchema, resetPasswordSchema, signupSchema,
   verifyEmailSchema, verifyEmailTokenSchema } from "@src/validations/AuthValidationSchemas";
 import { Router as expressRouters } from "express";
 import { checkSchema } from "express-validator";
@@ -26,5 +26,12 @@ authRoutes.route('/verify-email').
 // forget-password routes
 authRoutes.route('/forget-password').
     post(checkSchema(forgetPasswordSchema, ['body']), validateRequestSchema, ForgetPassword);
+
+authRoutes.route('/verify-forget-password').
+    post(checkSchema(verifyEmailTokenSchema, ['query']), validateRequestSchema, VerifyForgetPasswordToken);
+
+authRoutes.route('/reset-password').
+    post(checkSchema(resetPasswordSchema, ['body']), validateRequestSchema,
+        validatePasswordMatch, ResetPassword);
 
 export default authRoutes;

@@ -1,12 +1,13 @@
 import { AppError } from "@src/errors/AppError";
 import { getEnv } from "@src/utils/getEnv";
-import { formatTimeInWordsWithUnit } from "@src/utils/verificationTokenUtils";
+import { formatTimeInWordsWithUnit } from "@src/utils/formatTimeInWordsWithUnit";
 import nodemailer from "nodemailer";
 
 const url = getEnv("FRONTEND_URL");
 
-const createTransporter = () => {
-  const transporter = nodemailer.createTransport({
+class EmailService {
+  private static toSendEmail = process.env.NODE_ENV === "production";
+  private static transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
       user: "international.romeo333@gmail.com",
@@ -14,64 +15,78 @@ const createTransporter = () => {
     },
     secure: true,
   });
-  return transporter;
-};
 
-function sendVerificationEmail(email: string, token: string) {
-  const transporter = createTransporter();
-  const mailOptions = {
-    from: '"My Company" <international.romeo333@gmail.com>',
-    to: email,
-    subject: `Email Verification`,
-    html: `
-      <div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2 style="color: #007bff;">Email Verification</h2>
-        <p style="font-size: 16px;">You requested for email verification, kindly use this Link <a
-          style="color: #007bff; text-decoration: none;" href=${url}/verify-email?token=${encodeURIComponent(token)}">
-          Verify your email address</a> to verify your email address.</p>
-    <b>Note that this link will expire in the next ${
-  formatTimeInWordsWithUnit(getEnv("tokenExpiry.EMAIL_VERIFICATION"))}</b>
-          </div>
-    `,
-  };
-  // await for the email to be sent (which is slow )
-  /* try {
-    await transporter.sendMail(mailOptions);
-    return "Verification email sent successfully";
-  } catch (error) {
-    return "Error in sending email";
-  } */
-  // non async is used to avoid the slow email sending process
-  transporter.sendMail(mailOptions);
-  return "Verification email sent successfully";
-}
 
-const sendForgotPasswordEmail = async (email: string, token: string) => {
-  try {
-    const message = {
+  public static sendVerificationEmail(email: string, token: string) {
+    if (!this.toSendEmail) {
+      return "Email sending disabled";
+    }
+
+    const mailOptions = {
+      from: '"My Company" <international.romeo333@gmail.com>',
       to: email,
-      subject: "Forgot Password",
+      subject: `Email Verification`,
       html: `
-          <p>To reset your password, please click the link below.
-            <a
-              href="${url}/reset-password?token=${encodeURIComponent(token)}"
-            >
-            <br/>
-            Reset Password
-            </a></p>
-          <p>
-            <b>Note that this link will expire in the next ${
-  formatTimeInWordsWithUnit(getEnv("tokenExpiry.PASSWORD_RESET"))}</b>
-          </p>`,
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2 style="color: #007bff;">Email Verification</h2>
+          <p style="font-size: 16px;">You requested for email verification, kindly use this Link <a
+            style="color: #007bff; text-decoration: none;" href=${url}/verify-email?token=${encodeURIComponent(token)}">
+            Verify your email address</a> to verify your email address.</p>
+      <b>Note that this link will expire in the next ${formatTimeInWordsWithUnit(
+      getEnv("tokenExpiry.EMAIL_VERIFICATION"))}</b>
+            </div>
+      `,
     };
 
-    const emailTransporter = createTransporter();
-    await emailTransporter.sendMail(message);
-    return "Password reset email sent successfully";
-  } catch (error:any) {
-    throw new AppError(error.message, 500);
+    this.transporter.sendMail(mailOptions);
+    return "Verification email sent successfully";
   }
-};
 
-export { sendForgotPasswordEmail, sendVerificationEmail };
+  public static async sendForgotPasswordEmail(email: string, token: string) {
+    if (!this.toSendEmail) {
+      return "Email sending disabled";
+    }
 
+    try {
+      const message = {
+        to: email,
+        subject: "Forgot Password",
+        html: `
+            <p>To reset your password, please click the link below.
+              <a
+                href="${url}/reset-password?token=${encodeURIComponent(token)}"
+              >
+              <br/>
+              Reset Password
+              </a></p>
+            <p>
+              <b>Note that this link will expire in the next ${formatTimeInWordsWithUnit(
+      getEnv("tokenExpiry.PASSWORD_RESET"))}</b>
+            </p>`,
+      };
+
+      await this.transporter.sendMail(message);
+      return "Password reset email sent successfully";
+    } catch (error: any) {
+      throw new AppError(error.message, 500);
+    }
+  }
+
+  public static async sendResetPasswordEmail(email: string) {
+    if (!this.toSendEmail) {
+      return "Email sending disabled";
+    }
+
+    const message = {
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject: "Password Reset Successful",
+      html: "<p>Your password has been changed successfully.</p>",
+    };
+
+    await this.transporter.sendMail(message);
+    return "Password reset email sent successfully";
+  }
+}
+
+export default EmailService;

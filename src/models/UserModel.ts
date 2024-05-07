@@ -30,6 +30,24 @@ async function makeUserVerifiedAndDeleteToken(userId: number) {
   });
 }
 
+async function updatePasswordAndDeleteToken(userId: number, password: string) {
+  return await prisma.$transaction(async (tx)=> {
+    await tx.userToken.delete({
+      where: {
+        userId_tokenType: {
+          userId,
+          tokenType: "PASSWORD_RESET",
+        },
+      },
+    });
+    return await tx.user.update({
+      data: { password },
+      where: { id: userId },
+      select: { email: true },
+    });
+  });
+}
+
 async function checkUserEmailUniquenes(email: string) {
   const isEmailUnique = await prisma.user.findUnique({
     where: {
@@ -54,8 +72,9 @@ async function findUserById(userId: number) {
 export {
   checkUserEmailUniquenes,
   createUser,
+  makeUserVerifiedAndDeleteToken,
+  updatePasswordAndDeleteToken,
   findUserByEmail,
   findUserById,
-  makeUserVerifiedAndDeleteToken,
 };
 

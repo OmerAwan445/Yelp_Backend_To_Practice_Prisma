@@ -28,7 +28,6 @@ export default {
     PASSWORD_RESET: "",
   },
   VerificationTokenSecret: "",
-  VerificationTokenIVSecret: "",
   RESEND_VERIFICATION_EMAIL_TIME: 600, // 10 minutes in seconds (60*10)
   RESEND_FORGET_PASS_EMAIL_TIME: 600, // 10 minutes in seconds (60*10)
 };

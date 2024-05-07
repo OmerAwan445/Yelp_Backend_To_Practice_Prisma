@@ -1,12 +1,11 @@
 import { AppError } from "@src/errors/AppError";
 import { saveTokenToDbIfExistUpdate } from "@src/models/UserTokenModel";
 import { getEnv } from "@src/utils/getEnv";
-import {
-  formatTimeInWordsWithUnit,
-  isTokenResendEligible,
-} from "@src/utils/verificationTokenUtils";
+import { formatTimeInWordsWithUnit } from "@src/utils/formatTimeInWordsWithUnit";
+import { isTokenResendEligible } from "./cryptoVerificationTokenSvs";
 import { generateCryptoTokenAndEncryptData } from "./cryptoVerificationTokenSvs";
-import { sendVerificationEmail } from "./mailSvs";
+import EmailService from "./mailSvs";
+import { EncryptedDataInToken } from "@src/Types";
 
 
 /**
@@ -28,11 +27,11 @@ const sendVerificationEmailAndSaveTokenIfResendTimeLimitNotExceeded = async (ema
       error: true, statusCode: 409,
     };
   }
-  const token = generateCryptoTokenAndEncryptData( { userId } );
+  const token = generateCryptoTokenAndEncryptData<EncryptedDataInToken>( { userId } );
   if (!token) throw new AppError("Token generation failed", 500);
-  const msg = sendVerificationEmail(email, token);
+  const msg = EmailService.sendVerificationEmail(email, token);
   await saveTokenToDbIfExistUpdate(token, userId, tokenType);
-  return { msg, error: false, statusCode: 200 };
+  return { token: encodeURIComponent(token), msg, error: false, statusCode: 200 };
 };
 
 

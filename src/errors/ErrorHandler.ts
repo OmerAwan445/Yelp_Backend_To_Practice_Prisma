@@ -1,6 +1,5 @@
 import { CustomError } from "@src/Types";
 import ApiResponse from "@utils/ApiResponse";
-import { getEnv } from "@utils/getEnv";
 import { Response } from "express";
 import { AppError } from "./AppError";
 
@@ -48,7 +47,7 @@ class ErrorHandler {
     } else {
       // crash the application
       this.error.statusCode = 500;
-      if (getEnv("DEV_ENV") === "development") {
+      if (process.env.NODE_ENV === "development") {
         return this.responseStream
             .status(500)
             .send(errorResponseObj(this.error));
@@ -73,7 +72,7 @@ export default ErrorHandler;
  * Returns a different error response object depending on the development environment.
  */
 function errorResponseObj(error: AppError | CustomError) {
-  if (getEnv("DEV_ENV") === "development") {
+  if (process.env.NODE_ENV === "development") {
     return {
       ...error,
       error: true,

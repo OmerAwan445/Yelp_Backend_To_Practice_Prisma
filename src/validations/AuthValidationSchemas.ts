@@ -74,11 +74,28 @@ export const verifyEmailTokenSchema: Schema = {
     errorMessage: "Token is required",
   },
 };
+
 export const forgetPasswordSchema: Schema = {
   email: {
     notEmpty: true,
     isEmail: {
       errorMessage: "Invalid email",
+    },
+  },
+};
+
+export const resetPasswordSchema: Schema = {
+  token: {
+    notEmpty: true,
+    isString: {
+      errorMessage: "Token must be a string",
+    },
+    errorMessage: "Token is required",
+  },
+  password: {
+    isLength: {
+      options: { min: 8 },
+      errorMessage: "Password must be 8 characters",
     },
   },
 };
