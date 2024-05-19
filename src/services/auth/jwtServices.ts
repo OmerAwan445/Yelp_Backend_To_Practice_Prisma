@@ -1,6 +1,7 @@
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { getEnv } from '@utils/getEnv';
 import { JwtUser } from '@src/Types';
+import { AppError } from '@src/errors/AppError';
 
 async function generateAccessToken(user:JwtUser):Promise<string> {
   return new Promise((resolve, reject) => {
@@ -18,16 +19,15 @@ async function generateAccessToken(user:JwtUser):Promise<string> {
 
 async function verifyToken(token:string) {
   try {
-    const decodedToken = jwt.verify(token, getEnv('JWT')?.access_token_secret) as JwtPayload;
+    const decodedToken = jwt.verify(token, getEnv('JWT')?.access_token_secret);
 
     if (!decodedToken || typeof decodedToken !== 'object' || !('user' in decodedToken)) {
-      return { error: true, message: 'Token is invalid' };
+      throw new AppError('Invalid token', 401);
     }
 
-    return { error: false, message: 'Token is valid' };
+    return decodedToken;
   } catch (error:any) {
-    console.log('Error in verifying token:', error.message);
-    return { error: true, message: error.message ?? 'Error in verifying token' };
+    throw new AppError("Invalid Token", 401);
   }
 }
 

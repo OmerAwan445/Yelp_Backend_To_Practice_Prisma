@@ -47,6 +47,18 @@ export const loginSchema: Schema = {
   },
 };
 
+export const verifyLoginSchema: Schema = {
+  authorization: {
+    notEmpty: true,
+    exists: true,
+    contains: {
+      options: ["Bearer "],
+      errorMessage: "Authorization token must start with 'Bearer '",
+    },
+    errorMessage: "No authorization token found",
+  },
+};
+
 
 export const verifyEmailSchema: Schema = {
   userId: {

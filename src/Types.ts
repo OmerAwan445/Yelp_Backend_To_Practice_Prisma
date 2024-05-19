@@ -1,4 +1,25 @@
+import { Prisma } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 
+
+// ======= Global types ==========
+declare module "jsonwebtoken" {
+    export interface JwtPayload {
+        user: JwtUser;
+    }
+}
+
+// eslint-disable-next-line
+declare global {
+    // eslint-disable-next-line
+    namespace Express {
+        interface Request {
+        user?: JwtUser; // Define the user property with the appropriate type
+  }
+}
+  }
+
+export type RatingsCreateData = Prisma.RatingsCreateArgs['data'];
 export interface CustomError extends Error {
     statusCode: number;
 }
@@ -31,3 +52,13 @@ export interface ResetPasswordRequestBody {
 export interface EncryptedDataInToken {
     userId: number;
 }
+
+export interface CreateRatingRequestBody {
+    review: string
+    rating: Decimal
+    restaurantId: number
+}
+
+export interface CreateRatingRequestParam {
+    restaurantId?: number
+ }

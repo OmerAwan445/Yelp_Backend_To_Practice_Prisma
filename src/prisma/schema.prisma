@@ -8,29 +8,54 @@ datasource db {
 }
 
 model User {
-  id          Int         @id @default(autoincrement())
-  email       String      @unique
-  first_name  String
-  last_name   String
-  password    String
-  photo       String?
-  is_verified Boolean     @default(false)
-  created_at  DateTime    @default(now())
-  updated_at  DateTime    @updatedAt
-  userToken   UserToken[]
+  id           Int         @id @default(autoincrement())
+  email        String      @unique
+  first_name   String
+  last_name    String
+  password     String
+  photo        String?
+  is_verified  Boolean     @default(false)
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+  userToken    UserToken[]
+  ratingsGiven Ratings[]
 }
 
 model UserToken {
-  id        Int       @id @default(autoincrement())
-  tokenType tokenType
-  token     String
-  expiry    DateTime
-  userId    Int
-  updated_at DateTime @updatedAt
-  created_at DateTime @default(now())
-  user      User      @relation(fields: [userId], references: [id])
+  id         Int       @id @default(autoincrement())
+  tokenType  tokenType
+  token      String
+  expiry     DateTime
+  userId     Int
+  updated_at DateTime  @updatedAt
+  created_at DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id])
 
   @@unique([userId, tokenType])
+}
+
+model Ratings {
+  id           Int        @id @default(autoincrement())
+  review       String     @db.VarChar(255)
+  rating       Decimal    @db.Decimal(2, 1)
+  userId       Int
+  restaurantId Int
+  ratingBy     User       @relation(fields: [userId], references: [id])
+  Restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  created_at DateTime @default(now())
+}
+
+model Restaurant {
+  id            Int       @id @default(autoincrement())
+  name          String    @db.VarChar(255)
+  location      String    @db.VarChar(255)
+  ratings       Ratings[]
+  averageRating Float     @default(0)
+  priceRange    Decimal   @db.Decimal(60, 2)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 enum tokenType {
