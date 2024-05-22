@@ -18,6 +18,10 @@ declare global {
   }
 }
   }
+// Generic type
+export type RemoveUndefined<T> = {
+    [k in keyof T] : T[k] extends undefined ? never : T[k];
+};
 
 export type RatingsCreateData = Prisma.RatingsCreateArgs['data'];
 export interface CustomError extends Error {
@@ -29,6 +33,7 @@ export interface JwtUser {
     email: string;
     name: string;
 }
+
 
 // Request Body Interfaces
 export interface SignupRequestBody {
@@ -51,6 +56,21 @@ export interface ResetPasswordRequestBody {
 
 export interface EncryptedDataInToken {
     userId: number;
+}
+
+
+// =============== Restuarants ================
+
+export interface RestaurantCreateData {
+ name: string;
+ location: string;
+ priceRange: Decimal;
+}
+
+export interface RestaurantUpdateData {
+ name?: string;
+ location?: string;
+ priceRange?: Decimal;
 }
 
 export interface CreateRatingRequestBody {

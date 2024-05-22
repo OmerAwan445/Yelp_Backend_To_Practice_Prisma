@@ -51,8 +51,8 @@ model Restaurant {
   name          String    @db.VarChar(255)
   location      String    @db.VarChar(255)
   ratings       Ratings[]
-  averageRating Float     @default(0)
   priceRange    Decimal   @db.Decimal(60, 2)
+  averageRating Float     @default(0)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

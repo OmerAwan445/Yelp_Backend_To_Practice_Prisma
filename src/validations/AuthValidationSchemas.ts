@@ -7,7 +7,7 @@ export const signupSchema:Schema = {
       errorMessage: "First name must be a string",
     },
     matches: {
-      options: /^[a-zA-Z]+$/,
+      options: /^[a-zA-Z\s]+$/,
       errorMessage: "First name must contain only alphabetic characters",
     },
     errorMessage: "First name is required",
@@ -18,8 +18,8 @@ export const signupSchema:Schema = {
       errorMessage: "Last name must be a string",
     },
     matches: {
-      options: /^[a-zA-Z]+$/,
-      errorMessage: "First name must contain only alphabetic characters",
+      options: /^[a-zA-Z\s]+$/,
+      errorMessage: "Last name must contain only alphabetic characters",
     },
     errorMessage: "Last name is required",
   },
