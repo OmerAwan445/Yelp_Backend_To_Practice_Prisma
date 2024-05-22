@@ -1,15 +1,32 @@
 import { prisma } from "@src/db";
-import { prismaExclude } from "../utils/prismaExclude";
+import { prismaExclude } from "../utils/prisma/prismaExclude";
+import { AppError } from "@src/errors/AppError";
+import { hashPassword } from "@src/services/auth/bcryptPasswordSvs";
 
-async function createUser(
+async function checkEmailUniqueAndCreateUser(
     first_name: string,
     last_name: string,
     email: string,
-    hashedPassword: string,
+    password: string,
 ) {
-  return await prisma.user.create({
-    data: { first_name, last_name, email, password: hashedPassword },
-    select: prismaExclude("User", ["password"]),
+  return await prisma.$transaction(async (tx) => {
+    const existingUser = await tx.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new AppError('Email already exists', 409);
+    }
+
+    const hashedPassword = await hashPassword(password);
+    return await tx.user.create({
+      data: {
+        first_name,
+        last_name,
+        email,
+        password: hashedPassword,
+      },
+    });
   });
 }
 
@@ -71,7 +88,7 @@ async function findUserById(userId: number) {
 
 export {
   checkUserEmailUniquenes,
-  createUser,
+  checkEmailUniqueAndCreateUser,
   makeUserVerifiedAndDeleteToken,
   updatePasswordAndDeleteToken,
   findUserByEmail,

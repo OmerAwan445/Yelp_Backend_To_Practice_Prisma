@@ -1,31 +1,25 @@
 import { LoginRequestBody, ResetPasswordRequestBody, SignupRequestBody } from '@src/Types';
 import { AppError } from '@src/errors/AppError';
-import { checkUserEmailUniquenes, createUser, findUserByEmail, findUserById, makeUserVerifiedAndDeleteToken, updatePasswordAndDeleteToken } from '@src/models/UserModel'; // eslint-disable-line
+import { checkEmailUniqueAndCreateUser, findUserByEmail, findUserById, makeUserVerifiedAndDeleteToken, updatePasswordAndDeleteToken } from '@src/models/UserModel'; // eslint-disable-line
+import { comparePassword, hashPassword } from '@src/services/auth/bcryptPasswordSvs';
 import { checkTokenValidityAndExtractData } from '@src/services/auth/cryptoVerificationTokenSvs'; // eslint-disable-line
 import { sendForgetPassEmailAndSaveTokenIfResendTimeLimitNotExceeded } from '@src/services/auth/forgetPasswordSvs';
+import { generateAccessToken } from '@src/services/auth/jwtServices';
 import EmailService from '@src/services/auth/mailSvs';
 import { sendVerificationEmailAndSaveTokenIfResendTimeLimitNotExceeded } from '@src/services/auth/verificationEmailSvs';
-import { comparePassword, hashPassword } from '@src/services/auth/bcryptPasswordSvs';
-import { generateAccessToken } from '@src/services/auth/jwtServices';
 import ApiResponse from '@src/utils/ApiResponse';
 import { catchAsyncError } from '@src/utils/catchAsyncError';
 import { Request } from 'express';
 
-const SignupUser = catchAsyncError(async (req: Request<object, object, SignupRequestBody>, res, next) => {
+const SignupUser = catchAsyncError(async (req: Request<object, object, SignupRequestBody>, res) => {
   const { first_name, last_name, email, password } = req.body;
 
-  const isEmailUnique = await checkUserEmailUniquenes(email);
-  if (isEmailUnique == false) return next(new AppError('Email already exists', 409));
-
-  const hashedPassword = await hashPassword(password);
-  const user = await createUser(first_name, last_name, email, hashedPassword);
-
+  const user = await checkEmailUniqueAndCreateUser(first_name, last_name, email, password);
   // Send verification email and save token
   const { msg } = await sendVerificationEmailAndSaveTokenIfResendTimeLimitNotExceeded(user.email, user.id);
 
   return res.send(ApiResponse.success({ ...user }, 'User created successfully & ' + msg, 201));
 });
-
 
 const LoginUser = catchAsyncError(async (req: Request<object, object, LoginRequestBody>, res, next ) => {
   const { email, password } = req.body;
@@ -108,7 +102,6 @@ const VerifyForgetPasswordToken = catchAsyncError(async (req: Request<any, any, 
   return res.send(ApiResponse.success(process.env.NODE_ENV === "production" ?
   { } : { ...data }, "Token Verified Successfully"));
 });
-
 
 const ResetPassword = catchAsyncError(async (req: Request<any, any, ResetPasswordRequestBody>,
     res, next) => {

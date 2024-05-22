@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal, PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 
 // ======= Global types ==========
@@ -27,6 +27,9 @@ export type RatingsCreateData = Prisma.RatingsCreateArgs['data'];
 export interface CustomError extends Error {
     statusCode: number;
 }
+export interface ExtendedPrismaClientKnownRequestError extends PrismaClientKnownRequestError {
+    statusCode?: number;
+  }
 
 export interface JwtUser {
     id: number

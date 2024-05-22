@@ -29,7 +29,7 @@ model UserToken {
   userId     Int
   updated_at DateTime  @updatedAt
   created_at DateTime  @default(now())
-  user       User      @relation(fields: [userId], references: [id])
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, tokenType])
 }
@@ -41,7 +41,7 @@ model Ratings {
   userId       Int
   restaurantId Int
   ratingBy     User       @relation(fields: [userId], references: [id])
-  Restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  Restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   created_at DateTime @default(now())
 }

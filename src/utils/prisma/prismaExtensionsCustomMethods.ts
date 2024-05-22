@@ -6,7 +6,6 @@ const ratingExtension = Prisma.defineExtension({
   model: {
     ratings: {
       createRating: async (data: RatingsCreateData)=>{
-        console.log("This is query");
         return await prisma.ratings.create({
           data,
         });

@@ -7,10 +7,10 @@ export const RegisterRestaurantSchema: Schema = {
     isString: {
       errorMessage: "name must be a string",
     },
-    matches: {
-      options: /^[a-zA-Z\s]+$/,
-      errorMessage: "name must contain only alphabetic characters",
-    },
+    // matches: {
+    //   options: /^[a-zA-Z\s]+$/,
+    //   errorMessage: "name must contain only alphabetic characters",
+    // },
   },
   location: {
     notEmpty: true,

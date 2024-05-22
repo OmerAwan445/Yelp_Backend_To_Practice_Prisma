@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { ratingExtension } from "./utils/prismaExtensionsCustomMethods";
+import { ratingExtension } from "./utils/prisma/prismaExtensionsCustomMethods";
 
 let prismaInstance: PrismaClient | null = null;
 
